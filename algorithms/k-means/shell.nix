@@ -6,7 +6,7 @@ let
   py = python311.withPackages pythonPackages;
 in
   mkShell {
-    buildInputs = [ py ];
+    buildInputs = [ py ruff ];
     shellHook = ''
     export fish_prompt_prefix='[problems]'
     exec fish
