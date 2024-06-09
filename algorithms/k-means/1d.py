@@ -45,7 +45,7 @@ def assign_cluster_indices(
 ) -> NP_INT_ARRAY:
     return np.array(
         [
-            (distances := [np.sqrt((datum - c) ** 2) for c in cluster_centroids]).index(
+            (distances := [np.linalg.norm((datum - c)) for c in cluster_centroids]).index(
                 min(distances)
             )
             for datum in input_data
@@ -71,13 +71,15 @@ def reinitialise_empty_clusters(
     cluster_centroids: NP_FLOAT_ARRAY,
     rand_gen: Generator[float, None, Never],
 ) -> tuple[NP_INT_ARRAY, NP_FLOAT_ARRAY]:
-    cluster_sizes = compute_cluster_sizes(cluster_indices, len(cluster_centroids))
+    cluster_sizes = compute_cluster_sizes(
+        cluster_indices, len(cluster_centroids))
 
     while any([size == 0 for size in cluster_sizes]):
         for cluster_index, cluster_size in enumerate(cluster_sizes, 0):
             if cluster_size == 0:
                 cluster_centroids[cluster_index] = next(rand_gen)
-                cluster_indices = assign_cluster_indices(input_data, cluster_centroids)
+                cluster_indices = assign_cluster_indices(
+                    input_data, cluster_centroids)
                 cluster_sizes = compute_cluster_sizes(
                     cluster_indices, len(cluster_centroids)
                 )
@@ -103,7 +105,10 @@ def update_cluster_centroids(
 
 
 def main(
-    input_data: NP_INT_ARRAY, n_clusters: int, rand_gen: Generator[float, None, Never]
+    input_data: NP_INT_ARRAY,
+    n_clusters: int,
+    epsilon: float,
+    rand_gen: Generator[float, None, Never],
 ):
     logging.info(f"{input_data=}")
 
@@ -127,15 +132,17 @@ def main(
             input_data, cluster_indices, n_clusters
         )
 
-        if (old_cluster_centroids == cluster_centroids).all():
+        if (np.linalg.norm(old_cluster_centroids - cluster_centroids) < epsilon).all():
             break
 
     logging.info(f"Found clusters {cluster_centroids=}")
 
 
 if __name__ == "__main__":
-    low, high = -10, 11
-    n_clusters = 3
-    rand_gen = random_generator(low, high)
+    LOW, HIGH = -10, 11
+    N_CLUSTERS = 3
+    EPSILON = 0.0001
+
+    rand_gen = random_generator(LOW, HIGH)
     input_data = generate_input_data(20, rand_gen)
-    main(input_data, n_clusters, rand_gen)
+    main(input_data, N_CLUSTERS, EPSILON, rand_gen)
